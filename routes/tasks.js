@@ -6,6 +6,9 @@ const router = express.Router()
 
 module.exports = router;
 
+const allowedStatuses = [ 'open', 'closed', 'in_dev', 'blocked', 'in_qa' ];
+const allowedTypes = [ 'feature', 'bugfix', 'hotfix' ];
+
 function verifyJWT(req, res, next){
     const token = req.headers['x-access-token'];
     if (!token) return res.status(401).json({ auth: false, msg: 'No token provided.' });
@@ -73,14 +76,37 @@ router.get('/task/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.patch('/task/:taskId', verifyJWT, async (req, res) => {
+router.put('/task/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
         const updatedData = req.body;
-        const options = { new: true };
 
-        const task = await Tasks.findByIdAndUpdate( taskId, updatedData, options )
+        if (updatedData.hasOwnProperty('status')) {
+            var status = updatedData.status;
+            if (!allowedStatuses.includes(status)) return res.status(400).json({ success: false, msg: 'invalid status: ' + status });
+            if (status === 'closed') return res.status(400).json({ success: false, msg: 'invalid status: please use PUT /close endpoint' });
+        }
+
+        if (updatedData.hasOwnProperty('type')) {
+            var type = updatedData.type;
+            if (!allowedTypes.includes(type)) return res.status(400).json({ success: false, msg: 'invalid type: ' + type });
+        }
+
+        const task = await Tasks.findByIdAndUpdate( taskId, updatedData, { new: true } )
+        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+
+        res.send({ success: true, data: task })
+    } catch (error) {
+        res.status(400).json({ success: false, msg: error.message })
+    }
+})
+
+router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
+    try {
+        const taskId = req.params.taskId;
+
+        const task = await Tasks.findByIdAndUpdate( taskId, { status: 'closed' }, { new: true } )
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
         res.send({ success: true, data: task })
