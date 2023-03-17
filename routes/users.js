@@ -9,6 +9,9 @@ module.exports = router;
 
 router.post('/register', async (req, res) => {
     try{
+        const userCheck = await Users.findOne({ email: req.body.email });
+        if (userCheck) return res.status(400).json({ success: false, msg: 'E-mail already in use' });
+
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
         const user = new Users({
