@@ -1,27 +1,33 @@
-## Tasks Api in NodeJS
-A simple API in Node to handle some basic functions
+## Tasks API in NodeJS
+A simple API in NodeJS. It has some basic functions, like:
 
-With it you can:
-
-- Create users
-- Authenticate users
+- User registration and authentication using JWT
 - Perform CRUD operations of Tasks
+- Some basics business rules enforced
 
-### Setting It Up
+My main goal is to showcase some of Symfony's features like:
+
+- Migrations and model relationship
+- Authentication configuration
+- Routes definitions
+- SOLID and KISS principles on a MVC architecture
+
+The main tech behind it is NodeJs and also some others Js libs. For storaging, i'm using MongoDB non-relational database
+
+## Installation and Configuration
 This project currently uses MongoDB, so you should set it up and create a cluster. Once you have done that, run
 ```
 cp .env.example .env
 ```
 and fill out the bracketed values on that new copy's ```DATABASE_URL``` with your connection information. Don't forget to set up a crypt hash for the ```TOKEN_SECRET```
 
-### Building It
 Having npm and node installed and configured in your machine, git clone this rep then cd into the project's folder and run
 ```
 npm install
 npm start
 ````
 
-### Running It
+## Usage
 If you see ```Database Connected``` as the last message after running ```npm start``` then the app is good to go! You can consume it by performing the following operations:
 
 ### Users
