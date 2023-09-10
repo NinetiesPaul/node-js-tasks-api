@@ -16,45 +16,46 @@ function verifyJWT(req, res, next){
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
         if (err) return res.status(500).json({ auth: false, msg: 'Failed to authenticate token.' });
 
-        req.authenticatedUserId = decoded._id;
+        req.authenticatedUserId = decoded.id;
         next();
     });
 }
 
-router.post('/task', verifyJWT, async (req, res) => {
+router.post('/create', verifyJWT, async (req, res) => {
     try{
-        const task = new Tasks({
+
+        var typeValidation = validateTaskType(req.body.type)
+        if (!typeValidation) return res.status(400).json({ auth: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+
+        const Task = await Tasks.create({
             title: req.body.title,
             description: req.body.description,
             type: req.body.type,
-            status: req.body.status,
-            ownerId: req.authenticatedUserId
+            status: "open",
+            createdOn: new Date(),
+            createdBy: req.authenticatedUserId
         })
         
-        const taskToSave = await task.save();
-        res.status(200).json({ success: true, data: taskToSave })
+        res.status(200).json({ success: true, data: Task })
     } catch(error) {
         res.status(400).json({ success: false, msg: error.message })
     }
 })
 
-router.get('/tasks', verifyJWT, async (req, res) => {
+router.get('/list', verifyJWT, async (req, res) => {
     try{
-        const filterByOwner = req.query.owner;
-        const filterByStatus = req.query.status;
-        const filterByType = req.query.type;
-
-        var filters = {};
         var tasks = {};
+        var filters = {};
 
         if (JSON.stringify(req.query) === '{}') {
-            tasks = await Tasks.find();
+            tasks = await Tasks.findAll();
         } else {
-            if (filterByOwner) filters.ownerId = filterByOwner;
-            if (filterByStatus) filters.status = filterByStatus;
-            if (filterByType) filters.type = filterByType;
+            if (req.query.type) filters.type = req.query.type;
+            if (req.query.status) filters.status = req.query.status;
 
-            tasks = await Tasks.find(filters);
+            tasks = await Tasks.findAll({
+                where: filters
+            });
         }
         
         res.json({ success: true, result: { total: tasks.length, data: tasks } })
@@ -63,11 +64,16 @@ router.get('/tasks', verifyJWT, async (req, res) => {
     }
 })
 
-router.get('/task/:taskId', verifyJWT, async (req, res) => {
+router.get('/view/:taskId', verifyJWT, async (req, res) => {
     try{
         const taskId = req.params.taskId;
 
-        const task = await Tasks.findById(taskId);
+        var task = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
         res.send({ success: true, data: task })
@@ -76,54 +82,118 @@ router.get('/task/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.put('/task/:taskId', verifyJWT, async (req, res) => {
+router.put('/update/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
-        const updatedData = req.body;
+        var task = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
-        if (updatedData.hasOwnProperty('status')) {
-            var status = updatedData.status;
-            if (!allowedStatuses.includes(status)) return res.status(400).json({ success: false, msg: 'invalid status: ' + status });
-            if (status === 'closed') return res.status(400).json({ success: false, msg: 'invalid status: please use PUT /close endpoint' });
+        if (task.status == "closed") {
+            return res.status(400).json({ success: false, msg: "Invalid operation: cannot update a closed task" });
         }
 
-        if (updatedData.hasOwnProperty('type')) {
-            var type = updatedData.type;
-            if (!allowedTypes.includes(type)) return res.status(400).json({ success: false, msg: 'invalid type: ' + type });
+        if (req.body.hasOwnProperty('status')) {
+            if (req.body.status == "closed") return res.status(400).json({ success: false, msg: "Invalid operation: use PUT /api/task/close/{id} to close a task" });
         }
 
-        const task = await Tasks.findByIdAndUpdate( taskId, updatedData, { new: true } )
-        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+        if (req.body.hasOwnProperty('type')) {
+            var typeValidation = validateTaskType(req.body.type)
+            if (!typeValidation) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+        }
 
-        res.send({ success: true, data: task })
+        if (req.body.hasOwnProperty('status')) {
+            var statusValidation = validateTaskStatus(req.body.status)
+            if (!statusValidation) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
+        }
+
+        const newData = {};
+
+        if (req.body.title) newData.title = req.body.title
+        if (req.body.description) newData.description = req.body.description
+        if (req.body.type) newData.type = req.body.type
+        if (req.body.status) newData.status = req.body.status
+
+        await Tasks.update(newData, {
+            where: {
+                id: taskId
+            }
+        })
+
+        var updatedTask = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+        res.send({ success: true, data: updatedTask })
     } catch (error) {
         res.status(400).json({ success: false, msg: error.message })
     }
 })
 
-router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
+router.put('/close/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
-        const task = await Tasks.findByIdAndUpdate( taskId, { status: 'closed' }, { new: true } )
+        var task = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
-        res.send({ success: true, data: task })
+        if (task.status == "closed") {
+            return res.status(400).json({ success: false, msg: "Invalid operation: cannot close a closed task" });
+        }
+
+        await Tasks.update( {
+            status: "closed",
+            closedOn: new Date(),
+            closedBy: req.authenticatedUserId
+        }, {
+            where: {
+                id: taskId
+            }
+        })
+
+        var updatedTask = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+        res.send({ success: true, data: updatedTask })
     } catch (error) {
         res.status(400).json({ success: false, msg: error.message })
     }
 })
 
-router.delete('/task/:taskId', verifyJWT, async (req, res) => {
+router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
-        const task = await Tasks.findByIdAndDelete(taskId)
+        const task = await Tasks.destroy({
+            where: {
+                id: taskId
+            }
+        })
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
-        res.send({ success: true, msg: "Task with id " + taskId + " was deleted"})
+        res.send({ success: true, msg: "Task id '" + taskId + "' was deleted"})
     } catch (error) {
         res.status(400).json({ success: false, msg: error.message })
     }
 })
+
+function validateTaskType(taskType)
+{
+    return allowedTypes.includes(taskType)
+}
+
+function validateTaskStatus(taskStatus)
+{
+    return allowedStatuses.includes(taskStatus);
+}
