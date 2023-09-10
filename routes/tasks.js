@@ -98,7 +98,7 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
         }
 
         if (req.body.hasOwnProperty('status')) {
-            if (req.body.status == "closed") return res.status(400).json({ success: false, msg: "Invalid operation: use PUT /task/{id}/close to close a task" });
+            if (req.body.status == "closed") return res.status(400).json({ success: false, msg: "Invalid operation: use PUT /api/task/close/{id} to close a task" });
         }
 
         if (req.body.hasOwnProperty('type')) {
@@ -108,7 +108,7 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
 
         if (req.body.hasOwnProperty('status')) {
             var statusValidation = validateTaskStatus(req.body.status)
-            if (!statusValidation) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
+            if (!statusValidation) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
         }
 
         const newData = {};
