@@ -21,7 +21,7 @@ function verifyJWT(req, res, next){
     });
 }
 
-router.post('/task', verifyJWT, async (req, res) => {
+router.post('/create', verifyJWT, async (req, res) => {
     try{
 
         var typeValidation = validateTaskType(req.body.type)
@@ -44,7 +44,7 @@ router.post('/task', verifyJWT, async (req, res) => {
     }
 })
 
-router.get('/tasks', verifyJWT, async (req, res) => {
+router.get('/list', verifyJWT, async (req, res) => {
     try{
         var tasks = {};
         var filters = {};
@@ -66,7 +66,7 @@ router.get('/tasks', verifyJWT, async (req, res) => {
     }
 })
 
-router.get('/task/:taskId', verifyJWT, async (req, res) => {
+router.get('/view/:taskId', verifyJWT, async (req, res) => {
     try{
         const taskId = req.params.taskId;
 
@@ -84,7 +84,7 @@ router.get('/task/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.put('/task/:taskId', verifyJWT, async (req, res) => {
+router.put('/update/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
@@ -96,7 +96,7 @@ router.put('/task/:taskId', verifyJWT, async (req, res) => {
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
         if (task.status == "closed") {
-            return res.status(400).json({ success: false, msg: "Invalid operation: cannot update closed task" });
+            return res.status(400).json({ success: false, msg: "Invalid operation: cannot update a closed task" });
         }
 
         if (req.body.hasOwnProperty('status')) {
@@ -137,7 +137,7 @@ router.put('/task/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
+router.put('/close/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
@@ -148,7 +148,11 @@ router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
         });
         if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
 
-        var updateTask = await Tasks.update( {
+        if (task.status == "closed") {
+            return res.status(400).json({ success: false, msg: "Invalid operation: cannot close a closed task" });
+        }
+
+        await Tasks.update( {
             status: "closed",
             closedOn: new Date(),
             closedBy: req.authenticatedUserId
@@ -157,7 +161,6 @@ router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
                 id: taskId
             }
         })
-        if (updateTask == 0) return res.status(404).json({ success: false, msg: 'Update failed on task id ' + taskId });
 
         var updatedTask = await Tasks.findOne({
             where: {
@@ -170,7 +173,7 @@ router.put('/task/:taskId/close', verifyJWT, async (req, res) => {
     }
 })
 
-router.delete('/task/:taskId', verifyJWT, async (req, res) => {
+router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
     try {
         const taskId = req.params.taskId;
 
