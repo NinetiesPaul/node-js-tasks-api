@@ -1,27 +1,44 @@
-const mongoose = require('mongoose');
+const Sequelize = require ('sequelize');
+const connection = new Sequelize('tasks-api_nodejs', 'root', '', {
+    host: 'localhost',
+    dialect: 'mysql',
+    define: {
+        timestamps: false
+    },
+});
 
-const tasksSchema = new mongoose.Schema({
+const Tasks = connection.define('tasks', {
     title: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     },
     description: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     },
     status: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     },
     type: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     },
-    ownerId: {
-        required: true,
-        type: String
+    createdOn: {
+        type: Sequelize.DATE,
+        allowNull: false,
+    },
+    createdBy: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    closedOn: {
+        type: Sequelize.DATE,
+    },
+    closedBy: {
+        type: Sequelize.INTEGER,
     },
 
 })
 
-module.exports = mongoose.model('Tasks', tasksSchema)
+module.exports = Tasks

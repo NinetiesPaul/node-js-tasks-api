@@ -1,18 +1,26 @@
-const mongoose = require('mongoose');
+const Sequelize = require ('sequelize');
+const connection = new Sequelize('tasks-api_nodejs', 'root', '', {
+    host: 'localhost',
+    dialect: 'mysql',
+    define: {
+        timestamps: false
+    },
+});
 
-const usersSchema = new mongoose.Schema({
+const Users = connection.define('users', {
     name: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     },
     email: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
     },
     password: {
-        required: true,
-        type: String
+        type: Sequelize.STRING,
+        allowNull: false,
     }
 })
 
-module.exports = mongoose.model('Users', usersSchema)
+module.exports = Users
