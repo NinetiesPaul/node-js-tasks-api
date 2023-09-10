@@ -26,14 +26,12 @@ router.post('/create', verifyJWT, async (req, res) => {
 
         var typeValidation = validateTaskType(req.body.type)
         if (!typeValidation) return res.status(400).json({ auth: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
-        var statusValidation = validateTaskStatus(req.body.status)
-        if (!statusValidation) return res.status(400).json({ auth: false, msg: "Invalid task type: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
 
         const Task = await Tasks.create({
             title: req.body.title,
             description: req.body.description,
             type: req.body.type,
-            status: req.body.status,
+            status: "open",
             createdOn: new Date(),
             createdBy: req.authenticatedUserId
         })
