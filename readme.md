@@ -31,6 +31,8 @@ and fill out the bracketed values on that new copy's ```DATABASE_URL``` with you
 Having npm and node installed and configured in your machine, git clone this rep then cd into the project's folder and run
 ```
 npm install
+```
+```
 npm start
 ````
 If you see ```Server Started at 3000``` as the last message then the app is good to go!
