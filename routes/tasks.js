@@ -74,7 +74,7 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
             }
         });
 
-        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
 
         res.send({ success: true, data: task })
     } catch(error){
@@ -91,7 +91,7 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
 
         if (task.status == "closed") {
             return res.status(400).json({ success: false, msg: "Invalid operation: cannot update a closed task" });
@@ -144,7 +144,7 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
 
         if (task.status == "closed") {
             return res.status(400).json({ success: false, msg: "Invalid operation: cannot close a closed task" });
@@ -180,7 +180,7 @@ router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         })
-        if (!task) return res.status(404).json({ success: false, msg: 'Task not found with given id ' + taskId });
+        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
 
         res.send({ success: true, msg: "Task id '" + taskId + "' was deleted"})
     } catch (error) {
