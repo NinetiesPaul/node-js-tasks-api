@@ -33,12 +33,12 @@ Having npm and node installed and configured in your machine, git clone this rep
 npm install
 npm start
 ````
+If you see ```Server Started at 3000``` as the last message then the app is good to go!
 
 ## Usage
-If you see ```Server Started at 3000``` as the last message after running ```npm start``` then the app is good to go! You can consume it by performing the following operations:
 
-### Users
-#### Creating a User
+### __Users__
+#### User creation
 
 ```
 curl --location 'http://localhost:3000/register' \
@@ -50,7 +50,7 @@ curl --location 'http://localhost:3000/register' \
 }'
 ```
 
-#### Authenticating a User
+#### User authentication
 ```
 curl --location 'http://localhost:3000/login' \
 --header 'Content-Type: application/json' \
@@ -60,7 +60,7 @@ curl --location 'http://localhost:3000/login' \
 }'
 ```
 
-### Tasks
+### __Tasks__
 For the following requests, replace the ```{token}``` with the Token retrieved on the /login response payload, under the "token" attribute  
 Replace ```{task_id}``` with a Task Id
 #### Creating a Task
@@ -76,19 +76,19 @@ curl --location 'http://localhost:3000/api/task' \
 }'
 ```
 
-#### Selecting Multiple Tasks
+#### Listing all Tasks
 Replace ```{owner_id}``` with a User Id  
 Replace ```{status}``` with any of the following: new, in_dev, blocked, closed  
 Replace ```{type}``` with any of the following: new_feature, bugfix, hotfix  
 If none of these filters are present this endpoint will retrieve all existing Tasks
 ```
-curl --location 'http://localhost:3000/api/tasks?owner={owner_id}&status={status}&type={type}' \
+curl --location 'http://localhost:3000/api/task/list?owner={owner_id}&status={status}&type={type}' \
 --header 'x-access-token: {token}'
 ```
 
 #### Selecting a single Task
 ```
-curl --location 'http://localhost:3000/api/task/{task_id}' \
+curl --location 'http://localhost:3000/api/task/view/{task_id}' \
 --header 'x-access-token: {token}'
 ```
 
