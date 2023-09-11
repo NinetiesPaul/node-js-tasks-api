@@ -22,9 +22,9 @@ To run this application you must have installed on your environment:
 * `MySQL` - For storaging and accessing data
 
 ## Installation and Configuration
-This project currently uses MySQL, so you should download the MySQL Server and have it up and running on your enviroment. Once you have done that, run
+Once you set up all the necessary software, run
 ```
-cp .env.example .env
+cp config/config.json.local config/config.json
 ```
 and fill out the bracketed values on that new copy's ```DATABASE_URL``` with your connection information. Don't forget to set up a crypt hash for the ```TOKEN_SECRET```
 
