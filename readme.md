@@ -14,6 +14,13 @@ My main goal is to showcase some of Symfony's features like:
 
 The main tech behind it is NodeJs and also some others Js libraries. For storaging, i'm using MySQL relational database
 
+## Environment setup
+To run this application you must have installed on your environment:
+
+* `NodeJS` - For the main application 
+* `NPM` - For library and packages management
+* `MySQL` - For storaging and accessing data
+
 ## Installation and Configuration
 This project currently uses MySQL, so you should download the MySQL Server and have it up and running on your enviroment. Once you have done that, run
 ```
