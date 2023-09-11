@@ -15,7 +15,7 @@ My main goal is to showcase some of Symfony's features like:
 The main tech behind it is NodeJs and also some others Js libraries. For storaging, i'm using MySQL relational database
 
 ## Installation and Configuration
-This project currently uses MongoDB, so you should set it up and create a cluster. Once you have done that, run
+This project currently uses MySQL, so you should download the MySQL Server and have it up and running on your enviroment. Once you have done that, run
 ```
 cp .env.example .env
 ```
