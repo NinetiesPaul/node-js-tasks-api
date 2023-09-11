@@ -12,7 +12,7 @@ My main goal is to showcase some of Symfony's features like:
 - Routes definitions
 - SOLID and KISS principles on a MVC architecture
 
-The main tech behind it is NodeJs and also some others Js libs. For storaging, i'm using MongoDB non-relational database
+The main tech behind it is NodeJs and also some others Js libraries. For storaging, i'm using MySQL relational database
 
 ## Installation and Configuration
 This project currently uses MongoDB, so you should set it up and create a cluster. Once you have done that, run
@@ -28,7 +28,7 @@ npm start
 ````
 
 ## Usage
-If you see ```Database Connected``` as the last message after running ```npm start``` then the app is good to go! You can consume it by performing the following operations:
+If you see ```Server Started at 3000``` as the last message after running ```npm start``` then the app is good to go! You can consume it by performing the following operations:
 
 ### Users
 #### Creating a User
