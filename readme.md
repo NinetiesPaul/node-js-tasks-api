@@ -109,3 +109,9 @@ curl --location --request PUT 'http://localhost:3000/api/task/update/{task_id}' 
 curl --location --request DELETE 'http://localhost:3000/api/task/delete/{task_id}' \
 --header 'x-access-token: {token}'
 ```
+
+#### Closing a Task
+```
+curl --location --request PUT 'http://localhost:3000/api/task/close/{task_id}' \
+--header 'x-access-token: {token}'
+```
