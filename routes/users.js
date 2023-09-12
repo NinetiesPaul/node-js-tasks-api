@@ -7,9 +7,15 @@ const bcrypt = require('bcrypt');
 
 module.exports = router;
 
+const emailRegexp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 router.post('/register', async (req, res) => {
     try{
-        // TODO: custom message for email already taken
+        const user = await Users.findOne({ where: {email: req.body.email} });
+        if (user) return res.status(400).json({ success: false, msg: 'E-mail already taken' });
+
+        if (!emailRegexp.test(req.body.email)) return res.status(400).json({ success: false, msg: 'E-mail is invalid' });
+
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
         const User = await Users.create({
