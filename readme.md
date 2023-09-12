@@ -67,24 +67,23 @@ For the following requests, replace the ```{token}``` with the Token retrieved o
 Replace ```{task_id}``` with a Task Id
 #### Creating a Task
 ```
-curl --location 'http://localhost:3000/api/task' \
+curl --location 'http://localhost:3000/api/task/create' \
 --header 'x-access-token: {token}' \
 --header 'Content-Type: application/json' \
 --data '{
     "title": "My new Task",
     "description": "This is a task",
-    "status": "open",
-    "type": "new_feature"
+    "type": "feature"
 }'
 ```
 
 #### Listing all Tasks
-Replace ```{owner_id}``` with a User Id  
+Replace ```{created_by}``` with a User Id  
 Replace ```{status}``` with any of the following: new, in_dev, blocked, closed  
 Replace ```{type}``` with any of the following: new_feature, bugfix, hotfix  
 If none of these filters are present this endpoint will retrieve all existing Tasks
 ```
-curl --location 'http://localhost:3000/api/task/list?owner={owner_id}&status={status}&type={type}' \
+curl --location 'http://localhost:3000/api/task/list?owner={created_by}&status={status}&type={type}' \
 --header 'x-access-token: {token}'
 ```
 
@@ -96,16 +95,17 @@ curl --location 'http://localhost:3000/api/task/view/{task_id}' \
 
 #### Updating a Task
 ```
-curl --location --request PATCH 'http://localhost:3000/api/task/{taskId}' \
+curl --location --request PUT 'http://localhost:3000/api/task/update/{task_id}' \
 --header 'x-access-token: {token}' \
 --header 'Content-Type: application/json' \
 --data '{
-    "status": "closed"
+    "description": "a different description",
+    "status": "blocked"
 }'
 ```
 
 #### Deleting a Task
 ```
-curl --location --request DELETE 'http://localhost:3000/api/task/{taskId}' \
+curl --location --request DELETE 'http://localhost:3000/api/task/delete/{task_id}' \
 --header 'x-access-token: {token}'
 ```
