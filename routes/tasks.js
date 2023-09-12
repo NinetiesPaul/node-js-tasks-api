@@ -1,4 +1,5 @@
 const Tasks = require('../model/tasks');
+const Users = require('../model/tasks');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -50,8 +51,26 @@ router.get('/list', verifyJWT, async (req, res) => {
         if (JSON.stringify(req.query) === '{}') {
             tasks = await Tasks.findAll();
         } else {
+            if (req.query.type) {
+                if (!validateTaskType(req.query.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+            }
+    
+            if (req.query.status) {
+                if (!validateTaskStatus(req.query.status)) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
+            }
+    
+            if (req.query.created_by) {
+                var user = await Users.findOne({
+                    where: {
+                        id: req.query.created_by
+                    }
+                });
+                if (!user) return res.status(404).json({ success: false, msg: 'No user found with given id' });
+            }
+
             if (req.query.type) filters.type = req.query.type;
             if (req.query.status) filters.status = req.query.status;
+            if (req.query.created_by) filters.createdBy = req.query.created_by;
 
             tasks = await Tasks.findAll({
                 where: filters
@@ -102,13 +121,11 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
         }
 
         if (req.body.hasOwnProperty('type')) {
-            var typeValidation = validateTaskType(req.body.type)
-            if (!typeValidation) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+            if (!validateTaskType(req.body.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
         }
 
         if (req.body.hasOwnProperty('status')) {
-            var statusValidation = validateTaskStatus(req.body.status)
-            if (!statusValidation) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
+            if (!validateTaskStatus(req.body.status)) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
         }
 
         const newData = {};
