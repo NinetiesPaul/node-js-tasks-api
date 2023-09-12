@@ -79,8 +79,8 @@ curl --location 'http://localhost:3000/api/task/create' \
 
 #### Listing all Tasks
 Replace ```{created_by}``` with a User Id  
-Replace ```{status}``` with any of the following: new, in_dev, blocked, closed  
-Replace ```{type}``` with any of the following: new_feature, bugfix, hotfix  
+Replace ```{status}``` with any of the following: new, in_qa, in_dev, blocked, closed  
+Replace ```{type}``` with any of the following: feature, bugfix, hotfix  
 If none of these filters are present this endpoint will retrieve all existing Tasks
 ```
 curl --location 'http://localhost:3000/api/task/list?owner={created_by}&status={status}&type={type}' \
