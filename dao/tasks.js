@@ -1,11 +1,6 @@
 const Sequelize = require ('sequelize');
-const connection = new Sequelize('tasks-api_nodejs', 'root', '', {
-    host: 'localhost',
-    dialect: 'mysql',
-    define: {
-        timestamps: false
-    },
-});
+
+const connection = require('../db/connection.js')
 
 const Tasks = connection.define('tasks', {
     title: {
