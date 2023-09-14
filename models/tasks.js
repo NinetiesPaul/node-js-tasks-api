@@ -16,27 +16,21 @@ module.exports = (sequelize, DataTypes) => {
   Tasks.init({
     title: {
       type: DataTypes.STRING,
-      allowNull: false
     },
     description: {
       type: DataTypes.STRING,
-      allowNull: false
     },
     type: {
       type: DataTypes.STRING,
-      allowNull: false
     },
     status: {
       type: DataTypes.STRING,
-      allowNull: false
     },
     createdOn: {
       type: DataTypes.DATE,
-      allowNull: false
     },
     createdBy: {
       type: DataTypes.INTEGER,
-      allowNull: false
     },
     closedOn: {
       type: DataTypes.DATE
