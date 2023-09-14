@@ -1,8 +1,8 @@
 const Sequelize = require ('sequelize');
 
-const connection = require('../db/connection.js')
+const sequelize = require('../db/connection.js')
 
-const Tasks = connection.define('tasks', {
+const Tasks = sequelize.define('tasks', {
     title: {
         type: Sequelize.STRING,
     },
