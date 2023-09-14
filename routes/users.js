@@ -1,4 +1,4 @@
-const Users = require('../dao/users');
+const Users = require('../models/user');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');

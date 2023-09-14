@@ -1,5 +1,5 @@
-const Tasks = require('../dao/tasks');
-const Users = require('../dao/users');
+const Tasks = require('../models/tasks');
+const Users = require('../models/user');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
