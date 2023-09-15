@@ -1,7 +1,8 @@
 'use strict';
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
-const sequelize = require('../db/connection.js')
+const sequelize = require('../db/connection.js');
+const User = require('./user.js');
 
 class Tasks extends Model {}
 
@@ -21,19 +22,23 @@ Tasks.init({
   createdOn: {
     type: DataTypes.DATE,
   },
-  createdBy: {
-    type: DataTypes.INTEGER,
-  },
   closedOn: {
     type: DataTypes.DATE
-  },
-  closedBy: {
-    type: DataTypes.INTEGER
   },
 }, {
   sequelize,
   modelName: 'Tasks',
 });
+
+Tasks.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'createdByUser'
+})
+
+Tasks.belongsTo(User, {
+  foreignKey: 'closedBy',
+  as: 'closedByUser'
+})
 
 module.exports = Tasks
 

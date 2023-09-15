@@ -1,7 +1,7 @@
 'use strict';
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
-const sequelize = require('../db/connection.js')
+const sequelize = require('../db/connection.js');
 
 class User extends Model {}
 

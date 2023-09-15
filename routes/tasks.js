@@ -1,9 +1,13 @@
 const Tasks = require('../models/tasks');
+const User = require('../models/user');
 const Users = require('../models/user');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
+
+const { Sequelize, DataTypes, Model } = require('sequelize');
+
 
 module.exports = router;
 
@@ -49,7 +53,18 @@ router.get('/list', verifyJWT, async (req, res) => {
         var filters = {};
 
         if (JSON.stringify(req.query) === '{}') {
-            tasks = await Tasks.findAll();
+            tasks = await Tasks.findAll({
+                attributes: ['id', 'title', 'description', 'status', 'type', 'createdOn', 'closedOn'],
+                include: [{
+                    model: User,
+                    as: 'createdByUser',
+                    attributes: ['id', 'name', 'email']
+                },{
+                    model: User,
+                    as: 'closedByUser',
+                    attributes: ['id', 'name', 'email']
+                }]
+            })
         } else {
             if (req.query.type) {
                 if (!validateTaskType(req.query.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
@@ -73,7 +88,17 @@ router.get('/list', verifyJWT, async (req, res) => {
             if (req.query.created_by) filters.createdBy = req.query.created_by;
 
             tasks = await Tasks.findAll({
-                where: filters
+                where: filters,
+                attributes: ['id', 'title', 'description', 'status', 'type', 'createdOn', 'closedOn'],
+                include: [{
+                    model: User,
+                    as: 'createdByUser',
+                    attributes: ['id', 'name', 'email']
+                },{
+                    model: User,
+                    as: 'closedByUser',
+                    attributes: ['id', 'name', 'email']
+                }]
             });
         }
         
