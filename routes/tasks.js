@@ -32,7 +32,7 @@ router.post('/create', verifyJWT, async (req, res) => {
         var typeValidation = validateTaskType(req.body.type)
         if (!typeValidation) return res.status(400).json({ auth: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
 
-        const Task = await Tasks.create({
+        var taskCreated = await Tasks.create({
             title: req.body.title,
             description: req.body.description,
             type: req.body.type,
@@ -40,8 +40,22 @@ router.post('/create', verifyJWT, async (req, res) => {
             createdOn: new Date(),
             createdBy: req.authenticatedUserId
         })
-        
-        res.status(200).json({ success: true, data: Task })
+
+        var newTask = await Tasks.findOne({
+            where: { id: taskCreated.id },
+            attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'closed_by',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
+
+        res.status(200).json({ success: true, data: newTask })
     } catch(error) {
         res.status(400).json({ success: false, msg: error.message })
     }
@@ -52,26 +66,15 @@ router.get('/list', verifyJWT, async (req, res) => {
         var tasks = {};
         var filters = {};
 
-        if (JSON.stringify(req.query) === '{}') {
-            tasks = await Tasks.findAll({
-                attributes: ['id', 'title', 'description', 'status', 'type', 'createdOn', 'closedOn'],
-                include: [{
-                    model: User,
-                    as: 'createdByUser',
-                    attributes: ['id', 'name', 'email']
-                },{
-                    model: User,
-                    as: 'closedByUser',
-                    attributes: ['id', 'name', 'email']
-                }]
-            })
-        } else {
+        if (JSON.stringify(req.query) !== '{}') {
             if (req.query.type) {
                 if (!validateTaskType(req.query.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+                filters.type = req.query.type;
             }
     
             if (req.query.status) {
                 if (!validateTaskStatus(req.query.status)) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
+                filters.status = req.query.status;
             }
     
             if (req.query.created_by) {
@@ -80,29 +83,28 @@ router.get('/list', verifyJWT, async (req, res) => {
                         id: req.query.created_by
                     }
                 });
-                if (!user) return res.status(404).json({ success: false, msg: 'No user found with given id' });
+                if (!user) return res.status(404).json({ success: false, msg: 'USER_NOT_FOUND' });
+                filters.createdBy = req.query.created_by;
             }
 
-            if (req.query.type) filters.type = req.query.type;
-            if (req.query.status) filters.status = req.query.status;
             if (req.query.created_by) filters.createdBy = req.query.created_by;
-
-            tasks = await Tasks.findAll({
-                where: filters,
-                attributes: ['id', 'title', 'description', 'status', 'type', 'createdOn', 'closedOn'],
-                include: [{
-                    model: User,
-                    as: 'createdByUser',
-                    attributes: ['id', 'name', 'email']
-                },{
-                    model: User,
-                    as: 'closedByUser',
-                    attributes: ['id', 'name', 'email']
-                }]
-            });
         }
+
+        tasks = await Tasks.findAll({
+            where: filters,
+            attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'closed_by',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
         
-        res.json({ success: true, result: { total: tasks.length, data: tasks } })
+        res.json({ success: true, data: { total: tasks.length, tasks: tasks } })
     } catch(error){
         res.status(400).json({ success: false, msg: error.message })
     }
@@ -113,12 +115,20 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
         const taskId = req.params.taskId;
 
         var task = await Tasks.findOne({
-            where: {
-                id: taskId
-            }
+            where: { id: taskId },
+            attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'closed_by',
+                attributes: ['id', 'name', 'email']
+            }]
         });
 
-        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
+        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
 
         res.send({ success: true, data: task })
     } catch(error){
@@ -135,7 +145,7 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
+        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
 
         if (task.status == "closed") {
             return res.status(400).json({ success: false, msg: "Invalid operation: cannot update a closed task" });
@@ -167,10 +177,19 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
         })
 
         var updatedTask = await Tasks.findOne({
-            where: {
-                id: taskId
-            }
+            where: { id: taskId },
+            attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'closed_by',
+                attributes: ['id', 'name', 'email']
+            }]
         });
+
         res.send({ success: true, data: updatedTask })
     } catch (error) {
         res.status(400).json({ success: false, msg: error.message })
@@ -186,7 +205,7 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
+        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
 
         if (task.status == "closed") {
             return res.status(400).json({ success: false, msg: "Invalid operation: cannot close a closed task" });
@@ -203,9 +222,17 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
         })
 
         var updatedTask = await Tasks.findOne({
-            where: {
-                id: taskId
-            }
+            where: { id: taskId },
+            attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'closed_by',
+                attributes: ['id', 'name', 'email']
+            }]
         });
         res.send({ success: true, data: updatedTask })
     } catch (error) {
@@ -222,9 +249,9 @@ router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         })
-        if (!task) return res.status(404).json({ success: false, msg: 'No task found with given id' });
+        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
 
-        res.send({ success: true, msg: "Task id '" + taskId + "' was deleted"})
+        res.send({ success: true, data: "Task id '" + taskId + "' was deleted"})
     } catch (error) {
         res.status(400).json({ success: false, msg: error.message })
     }

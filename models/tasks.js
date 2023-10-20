@@ -32,12 +32,12 @@ Tasks.init({
 
 Tasks.belongsTo(User, {
   foreignKey: 'createdBy',
-  as: 'createdByUser'
+  as: 'created_by'
 })
 
 Tasks.belongsTo(User, {
   foreignKey: 'closedBy',
-  as: 'closedByUser'
+  as: 'closed_by'
 })
 
 module.exports = Tasks
