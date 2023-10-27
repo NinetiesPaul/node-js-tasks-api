@@ -15,9 +15,10 @@ const allowedStatuses = [ 'open', 'closed', 'in_dev', 'blocked', 'in_qa' ];
 const allowedTypes = [ 'feature', 'bugfix', 'hotfix' ];
 
 function verifyJWT(req, res, next){
-    const token = req.headers['x-access-token'];
+    var token = req.headers['authorization'];
     if (!token) return res.status(401).json({ auth: false, msg: 'No token provided.' });
     
+    token = token.split(" ")[1];
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
         if (err) return res.status(500).json({ auth: false, msg: 'Failed to authenticate token.' });
 
