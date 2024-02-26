@@ -3,7 +3,7 @@ const Users = require('../models/user');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 
 module.exports = router;
 
@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
 
         if (!emailRegexp.test(req.body.email)) return res.status(400).json({ success: false, msg: 'E-mail is invalid' });
 
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
         const User = await Users.create({
             name: req.body.name,
@@ -35,7 +35,7 @@ router.post('/login', async (req, res) => {
         const user = await Users.findOne({ where: {email: req.body.username} });
         if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
 
-        const match = await bcrypt.compare(req.body.password, user.password);
+        const match = await bcryptjs.compare(req.body.password, user.password);
         if (!match) return res.status(400).json({ success: false, msg: 'Login invalid' });
 
         const accessToken = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET)
