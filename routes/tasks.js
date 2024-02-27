@@ -102,7 +102,8 @@ router.get('/list', verifyJWT, async (req, res) => {
                 model: User,
                 as: 'closed_by',
                 attributes: ['id', 'name', 'email']
-            }]
+            }],
+            order: [['createdOn', 'DESC']]
         });
         
         res.json({ success: true, data: { total: tasks.length, tasks: tasks } })
