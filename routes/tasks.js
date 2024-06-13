@@ -194,7 +194,7 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
             newData.type = req.body.type
         }
 
-        if (req.body.status && req.body.status && task.status) {
+        if (req.body.status && req.body.status != task.status) {
             historyEntries['status'] = [ task.status, req.body.status ]
             newData.status = req.body.status
         }
