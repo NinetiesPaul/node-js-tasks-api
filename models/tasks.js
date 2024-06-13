@@ -3,6 +3,7 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 
 const sequelize = require('../db/connection.js');
 const User = require('./user.js');
+const TaskHistory = require('./taskhistory.js');
 
 class Tasks extends Model {}
 
@@ -38,6 +39,11 @@ Tasks.belongsTo(User, {
 Tasks.belongsTo(User, {
   foreignKey: 'closedBy',
   as: 'closed_by'
+})
+
+Tasks.hasMany(TaskHistory, {
+  foreignKey: 'task',
+  as: 'task_history'
 })
 
 module.exports = Tasks

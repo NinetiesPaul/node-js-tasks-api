@@ -1,6 +1,7 @@
 const Tasks = require('../models/tasks');
 const User = require('../models/user');
 const Users = require('../models/user');
+const TaskHistory = require('../models/taskhistory');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -127,6 +128,15 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
                 model: User,
                 as: 'closed_by',
                 attributes: ['id', 'name', 'email']
+            },{
+                model: TaskHistory,
+                as: 'task_history',
+                attributes: [ 'id', 'field', [ 'changedFrom', 'changed_from' ], [ 'changedTo', 'changed_to' ], [ 'changedOn', 'changed_on' ] ],
+                include: {
+                    model: User,
+                    as: 'changed_by',
+                    attributes: [ 'id', 'name', 'email' ]
+                },
             }]
         });
 
@@ -167,10 +177,38 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
 
         const newData = {};
 
-        if (req.body.title) newData.title = req.body.title
-        if (req.body.description) newData.description = req.body.description
-        if (req.body.type) newData.type = req.body.type
-        if (req.body.status) newData.status = req.body.status
+        let historyEntries = [];
+
+        if (req.body.title && req.body.title != task.title) {
+            historyEntries['title'] = [ task.title, req.body.title ]
+            newData.title = req.body.title
+        }
+
+        if (req.body.description && req.body.description != task.description) {
+            historyEntries['description'] = [ task.description, req.body.description ]
+            newData.description = req.body.description
+        }
+
+        if (req.body.type && req.body.type != task.type) {
+            historyEntries['type'] = [ task.type, req.body.type ]
+            newData.type = req.body.type
+        }
+
+        if (req.body.status && req.body.status != task.status) {
+            historyEntries['status'] = [ task.status, req.body.status ]
+            newData.status = req.body.status
+        }
+
+        for (var entry in historyEntries) {
+            await TaskHistory.create({
+                field: entry,
+                changedFrom: historyEntries[entry][0],
+                changedTo: historyEntries[entry][1],
+                changedOn: new Date(),
+                changedBy: req.authenticatedUserId,
+                task: task.id
+            })
+        }
 
         await Tasks.update(newData, {
             where: {
@@ -221,6 +259,15 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
             where: {
                 id: taskId
             }
+        })
+
+        await TaskHistory.create({
+            field: 'status',
+            changedFrom: task.status,
+            changedTo: 'closed',
+            changedOn: new Date(),
+            changedBy: req.authenticatedUserId,
+            task: task.id
         })
 
         var updatedTask = await Tasks.findOne({
