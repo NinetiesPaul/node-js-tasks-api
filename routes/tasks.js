@@ -23,7 +23,7 @@ function verifyJWT(req, res, next){
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
         if (err) return res.status(500).json({ auth: false, msg: 'Failed to authenticate token.' });
 
-        req.authenticatedUserId = decoded.id;
+        req.authenticatedUserId = decoded.user.id;
         next();
     });
 }

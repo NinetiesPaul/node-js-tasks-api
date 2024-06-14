@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
         const match = await bcryptjs.compare(req.body.password, user.password);
         if (!match) return res.status(400).json({ success: false, msg: 'Login invalid' });
 
-        const accessToken = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET)
+        const accessToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '600000' })
         res.json({ success: true, token: accessToken });
     } catch(error) {
         res.status(400).json({ success: false, msg: error.message })
