@@ -24,7 +24,12 @@ router.post('/register', async (req, res) => {
             password: hashedPassword
         })
 
-        res.status(200).json({ success: true, data: User })
+        var newUser = await Users.findOne({
+            where: { id: createdUser.id },
+            attributes: ['id', 'name', 'email' ],
+        });
+
+        res.status(200).json({ success: true, data: newUser })
     } catch(error) {
         res.status(400).json({ success: false, message: error.message })
     }
