@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
 
         const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
-        const User = await Users.create({
+        const createdUser = await Users.create({
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword
