@@ -18,13 +18,18 @@ router.post('/register', async (req, res) => {
 
         const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
-        const User = await Users.create({
+        const createdUser = await Users.create({
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword
         })
 
-        res.status(200).json({ success: true, data: User })
+        var newUser = await Users.findOne({
+            where: { id: createdUser.id },
+            attributes: ['id', 'name', 'email' ],
+        });
+
+        res.status(200).json({ success: true, data: newUser })
     } catch(error) {
         res.status(400).json({ success: false, message: error.message })
     }
