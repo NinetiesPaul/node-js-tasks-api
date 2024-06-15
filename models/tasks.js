@@ -43,7 +43,7 @@ Tasks.belongsTo(User, {
 
 Tasks.hasMany(TaskHistory, {
   foreignKey: 'task',
-  as: 'task_history'
+  as: 'history'
 })
 
 module.exports = Tasks
