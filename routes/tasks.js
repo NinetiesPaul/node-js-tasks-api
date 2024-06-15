@@ -130,7 +130,7 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
                 attributes: ['id', 'name', 'email']
             },{
                 model: TaskHistory,
-                as: 'task_history',
+                as: 'history',
                 attributes: [ 'id', 'field', [ 'changedFrom', 'changed_from' ], [ 'changedTo', 'changed_to' ], [ 'changedOn', 'changed_on' ] ],
                 include: {
                     model: User,
