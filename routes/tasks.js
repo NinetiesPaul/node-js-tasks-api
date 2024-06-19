@@ -6,9 +6,7 @@ const TaskHistory = require('../models/taskhistory');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
-
-const { Sequelize, DataTypes, Model } = require('sequelize');
-
+const { check, validationResult } = require('express-validator');
 
 module.exports = router;
 
@@ -28,11 +26,61 @@ function verifyJWT(req, res, next){
     });
 }
 
-router.post('/create', verifyJWT, async (req, res) => {
-    try{
+function createValidation()
+{
+    return [
+        check('title').exists().withMessage('MISSING_TITLE'),
+        check('title').if(check('title').exists()).isString().withMessage('TITLE_NOT_STRING'),
+        check('title').if(check('title').exists()).notEmpty().withMessage('EMPTY_TITLE'),
+        check('description').exists().withMessage('MISSING_DESCRIPTION'),
+        check('description').if(check('description').exists()).isString().withMessage('DESCRIPTION_NOT_STRING'),
+        check('description').if(check('description').exists()).notEmpty().withMessage('EMPTY_DESCRIPTION'),
+        check('type').exists().withMessage('MISSING_TYPE'),
+        check('type').if(check('type').exists()).isString().withMessage('TYPE_NOT_STRING'),
+        check('type').if(check('type').exists()).notEmpty().withMessage('EMPTY_TYPE'),
+        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TASK_TYPE'),
+    ];
+}
 
-        var typeValidation = validateTaskType(req.body.type)
-        if (!typeValidation) return res.status(400).json({ auth: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
+function updateValidation()
+{
+    return [
+        check('title').if(check('title').exists()).isString().withMessage('TITLE_NOT_STRING'),
+        check('title').if(check('title').exists()).notEmpty().withMessage('EMPTY_TITLE'),
+        check('description').if(check('description').exists()).isString().withMessage('DESCRIPTION_NOT_STRING'),
+        check('description').if(check('description').exists()).notEmpty().withMessage('EMPTY_DESCRIPTION'),
+        check('type').if(check('type').exists()).isString().withMessage('TYPE_NOT_STRING'),
+        check('type').if(check('type').exists()).notEmpty().withMessage('EMPTY_TYPE'),
+        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TASK_TYPE'),
+        check('status').if(check('status').exists())
+            .isString().withMessage('STATUS_NOT_STRING')
+            .notEmpty().withMessage('EMPTY_STATUS')
+            .if(check('status').not().equals('closed')).isIn(['open', 'in_dev', 'blocked', 'in_qa']).withMessage('INVALID_TASK_STATUS'),
+
+        check('taskId').if(check('status').isIn(['open', 'in_dev', 'blocked', 'in_qa'])).custom(async value => {
+            var task = await Tasks.findOne({
+                where: {
+                    id: value,
+                    status: 'closed'
+                }
+            });
+            if (task) throw new Error('TASK_CLOSED');
+        }),
+    ];
+}
+
+router.post('/create', verifyJWT, createValidation(), async (req, res) => {
+    var validator = validationResult(req);
+
+    var errorMessages = [];
+    validator.errors.forEach( errorLoop => {
+        errorMessages.push(errorLoop.msg)
+    });
+
+    if (errorMessages.length > 0) {
+        return res.status(400).json({ success: false, message: errorMessages });
+    }
+    try{
 
         var taskCreated = await Tasks.create({
             title: req.body.title,
@@ -65,34 +113,33 @@ router.post('/create', verifyJWT, async (req, res) => {
 
 router.get('/list', verifyJWT, async (req, res) => {
     try{
-        var tasks = {};
         var filters = {};
+        var paramErrors = [];
 
-        if (JSON.stringify(req.query) !== '{}') {
-            if (req.query.type) {
-                if (!validateTaskType(req.query.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
-                filters.type = req.query.type;
-            }
-    
-            if (req.query.status) {
-                if (!validateTaskStatus(req.query.status)) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
-                filters.status = req.query.status;
-            }
-    
-            if (req.query.created_by) {
-                var user = await Users.findOne({
-                    where: {
-                        id: req.query.created_by
-                    }
-                });
-                if (!user) return res.status(404).json({ success: false, msg: 'USER_NOT_FOUND' });
-                filters.createdBy = req.query.created_by;
-            }
-
-            if (req.query.created_by) filters.createdBy = req.query.created_by;
+        if (req.query.type) {
+            if (!validateTaskType(req.query.type)) paramErrors.push("INVALID_TASK_TYPE");
+            filters.type = req.query.type;
         }
 
-        tasks = await Tasks.findAll({
+        if (req.query.status) {
+            if (!validateTaskStatus(req.query.status)) paramErrors.push("INVALID_TASK_STATUS");
+            filters.status = req.query.status;
+        }
+
+        if (req.query.created_by) {
+            var user = await Users.findOne({
+                where: {
+                    id: req.query.created_by
+                }
+            });
+
+            if (!user) paramErrors.push("USER_NOT_FOUND");
+            filters.createdBy = req.query.created_by;
+        }
+
+        if (paramErrors.length > 0) return res.status(400).json({ success: false, message: paramErrors });
+
+        var tasks = await Tasks.findAll({
             where: filters,
             attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
             include: [{
@@ -140,15 +187,23 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
             }]
         });
 
-        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
+        if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
 
         res.send({ success: true, data: task })
     } catch(error){
-        res.status(400).json({ success: false, msg: error.message })
+        res.status(400).json({ success: false, message: [ error.message ] })
     }
 })
 
-router.put('/update/:taskId', verifyJWT, async (req, res) => {
+router.put('/update/:taskId', verifyJWT, updateValidation(), async (req, res) => {
+    var validator = validationResult(req);
+
+    var errorMessages = [];
+    validator.errors.forEach( errorLoop => {
+        errorMessages.push(errorLoop.msg)
+    });
+
+    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
     try {
         const taskId = req.params.taskId;
 
@@ -157,23 +212,10 @@ router.put('/update/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
 
-        if (task.status == "closed") {
-            return res.status(400).json({ success: false, msg: "Invalid operation: cannot update a closed task" });
-        }
+        if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
 
-        if (req.body.hasOwnProperty('status')) {
-            if (req.body.status == "closed") return res.status(400).json({ success: false, msg: "Invalid operation: use PUT /api/task/close/{id} to close a task" });
-        }
-
-        if (req.body.hasOwnProperty('type')) {
-            if (!validateTaskType(req.body.type)) return res.status(400).json({ success: false, msg: "Invalid task type: must be one of 'feature' 'bugfix' 'hotfix'" });
-        }
-
-        if (req.body.hasOwnProperty('status')) {
-            if (!validateTaskStatus(req.body.status)) return res.status(400).json({ success: false, msg: "Invalid task status: must be one of 'open' 'closed' 'in_dev' 'blocked' 'in_qa'" });
-        }
+        if (req.body.hasOwnProperty('status') && req.body.status == "closed") return res.status(400).json({ success: false, message: [ "CAN_NOT_UPDATE_TO_CLOSE" ] });
 
         const newData = {};
 
@@ -245,10 +287,10 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
                 id: taskId
             }
         });
-        if (!task) return res.status(404).json({ success: false, msg: 'TASK_NOT_FOUND' });
+        if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
 
         if (task.status == "closed") {
-            return res.status(400).json({ success: false, msg: "Invalid operation: cannot close a closed task" });
+            return res.status(400).json({ success: false, message: [ "TASK_ALREADY_CLOSED" ] });
         }
 
         await Tasks.update( {

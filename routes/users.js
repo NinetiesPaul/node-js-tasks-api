@@ -4,17 +4,43 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
 const bcryptjs = require('bcryptjs');
+const { check, validationResult } = require('express-validator');
 
 module.exports = router;
 
 const emailRegexp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-router.post('/register', async (req, res) => {
+function userValidation()
+{
+    return [
+        check('name').exists().withMessage('MISSING_NAME'),
+        check('name').if(check('name').exists()).isString().withMessage('NAME_NOT_STRING'),
+        check('name').if(check('name').exists()).notEmpty().withMessage('EMPTY_NAME'),
+        check('email').exists().withMessage('MISSING_EMAIL'),
+        check('email').if(check('email').exists()).isString().withMessage('EMAIL_NOT_STRING'),
+        check('email').if(check('email').exists()).notEmpty().withMessage('EMPTY_EMAIL'),
+        check('password').exists().withMessage('MISSING_PASSWORD'),
+        check('password').if(check('password').exists()).isString().withMessage('PASSWORD_NOT_STRING'),
+        check('password').if(check('password').exists()).notEmpty().withMessage('EMPTY_PASSWORD'),
+    ];
+}
+
+router.post('/register', userValidation(), async (req, res) => {
+    var validator = validationResult(req);
+
+    var errorMessages = [];
+    validator.errors.forEach( errorLoop => {
+        errorMessages.push(errorLoop.msg)
+    });
+
+    if (errorMessages.length > 0) {
+        return res.status(400).json({ success: false, message: errorMessages });
+    }
     try{
         const user = await Users.findOne({ where: {email: req.body.email} });
-        if (user) return res.status(400).json({ success: false, msg: 'E-mail already taken' });
+        if (user) return res.status(400).json({ success: false, message: [ "EMAIL_ALREADY_TAKEN" ] });
 
-        if (!emailRegexp.test(req.body.email)) return res.status(400).json({ success: false, msg: 'E-mail is invalid' });
+        if (!emailRegexp.test(req.body.email)) return res.status(400).json({ success: false, message: [ "INVALID_EMAIL" ] });
 
         const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
@@ -38,10 +64,10 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try{
         const user = await Users.findOne({ where: {email: req.body.username} });
-        if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
+        if (!user) return res.status(404).json({ success: false, message: [ "USER_NOT_FOUND" ] });
 
         const match = await bcryptjs.compare(req.body.password, user.password);
-        if (!match) return res.status(400).json({ success: false, msg: 'Login invalid' });
+        if (!match) return res.status(400).json({ success: false, message: [ "INVALID_CREDENTIALS" ] });
 
         const accessToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '600000' })
         res.json({ success: true, token: accessToken });
