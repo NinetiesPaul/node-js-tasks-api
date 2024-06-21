@@ -33,9 +33,7 @@ router.post('/register', userValidation(), async (req, res) => {
         errorMessages.push(errorLoop.msg)
     });
 
-    if (errorMessages.length > 0) {
-        return res.status(400).json({ success: false, message: errorMessages });
-    }
+    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
     try{
         const user = await Users.findOne({ where: {email: req.body.email} });
         if (user) return res.status(400).json({ success: false, message: [ "EMAIL_ALREADY_TAKEN" ] });

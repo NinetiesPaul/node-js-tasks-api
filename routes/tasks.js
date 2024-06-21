@@ -77,9 +77,7 @@ router.post('/create', verifyJWT, createValidation(), async (req, res) => {
         errorMessages.push(errorLoop.msg)
     });
 
-    if (errorMessages.length > 0) {
-        return res.status(400).json({ success: false, message: errorMessages });
-    }
+    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
     try{
 
         var taskCreated = await Tasks.create({
@@ -289,9 +287,7 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
         });
         if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
 
-        if (task.status == "closed") {
-            return res.status(400).json({ success: false, message: [ "TASK_ALREADY_CLOSED" ] });
-        }
+        if (task.status == "closed") return res.status(400).json({ success: false, message: [ "TASK_ALREADY_CLOSED" ] });
 
         await Tasks.update( {
             status: "closed",
