@@ -15,11 +15,11 @@ const allowedTypes = [ 'feature', 'bugfix', 'hotfix' ];
 
 function verifyJWT(req, res, next){
     var token = req.headers['authorization'];
-    if (!token) return res.status(401).json({ auth: false, msg: 'No token provided.' });
+    if (!token) return res.status(401).json({ success: false, message: [ "MISSING_TOKEN" ] });
     
     token = token.split(" ")[1];
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
-        if (err) return res.status(500).json({ auth: false, msg: 'Failed to authenticate token.' });
+        if (err) return res.status(500).json({ success: false, message: [ "INVALID_TOKEN" ] });
 
         req.authenticatedUserId = decoded.user.id;
         next();
@@ -38,7 +38,7 @@ function createValidation()
         check('type').exists().withMessage('MISSING_TYPE'),
         check('type').if(check('type').exists()).isString().withMessage('TYPE_NOT_STRING'),
         check('type').if(check('type').exists()).notEmpty().withMessage('EMPTY_TYPE'),
-        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TASK_TYPE'),
+        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TYPE'),
     ];
 }
 
@@ -51,11 +51,11 @@ function updateValidation()
         check('description').if(check('description').exists()).notEmpty().withMessage('EMPTY_DESCRIPTION'),
         check('type').if(check('type').exists()).isString().withMessage('TYPE_NOT_STRING'),
         check('type').if(check('type').exists()).notEmpty().withMessage('EMPTY_TYPE'),
-        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TASK_TYPE'),
+        check('type').if(check('type').exists()).isIn(['feature', 'bugfix', 'hotfix']).withMessage('INVALID_TYPE'),
         check('status').if(check('status').exists())
             .isString().withMessage('STATUS_NOT_STRING')
             .notEmpty().withMessage('EMPTY_STATUS')
-            .if(check('status').not().equals('closed')).isIn(['open', 'in_dev', 'blocked', 'in_qa']).withMessage('INVALID_TASK_STATUS'),
+            .if(check('status').not().equals('closed')).isIn(['open', 'in_dev', 'blocked', 'in_qa']).withMessage('INVALID_STATUS'),
 
         check('taskId').if(check('status').isIn(['open', 'in_dev', 'blocked', 'in_qa'])).custom(async value => {
             var task = await Tasks.findOne({
@@ -117,12 +117,12 @@ router.get('/list', verifyJWT, async (req, res) => {
         var paramErrors = [];
 
         if (req.query.type) {
-            if (!validateTaskType(req.query.type)) paramErrors.push("INVALID_TASK_TYPE");
+            if (!validateTaskType(req.query.type)) paramErrors.push("INVALID_TYPE");
             filters.type = req.query.type;
         }
 
         if (req.query.status) {
-            if (!validateTaskStatus(req.query.status)) paramErrors.push("INVALID_TASK_STATUS");
+            if (!validateTaskStatus(req.query.status)) paramErrors.push("INVALID_STATUS");
             filters.status = req.query.status;
         }
 
