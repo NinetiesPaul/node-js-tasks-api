@@ -407,7 +407,12 @@ router.delete('/unassign/:assignmentId', verifyJWT, async (req, res) => {
 
         const taskAssignment = await TaskAssignees.findOne({
             where: { id: assignmentId },
-            attributes: [ 'id', 'task' ]
+            attributes: [ 'id', 'task' ],
+            include: [{
+                model: User,
+                as: 'assigned_to',
+                attributes: ['id', 'name', 'email']
+            }],
         })
         if (!taskAssignment) return res.status(404).json({ success: false, message: [ 'ASSIGNMENT_NOT_FOUND' ] });
 
@@ -418,7 +423,7 @@ router.delete('/unassign/:assignmentId', verifyJWT, async (req, res) => {
         await TaskHistory.create({
             field: "removed_assignee",
             changedFrom: "",
-            changedTo: taskAssignment.name,
+            changedTo: taskAssignment.assigned_to.name,
             changedOn: new Date(),
             changedBy: req.authenticatedUserId,
             task: taskAssignment.task
