@@ -364,6 +364,15 @@ router.post('/assign/:taskId', verifyJWT, async (req, res) => {
             assignedBy: req.authenticatedUserId,
             task: task.id
         })
+        
+        await TaskHistory.create({
+            field: "added_assignee",
+            changedFrom: "",
+            changedTo: user.name,
+            changedOn: new Date(),
+            changedBy: req.authenticatedUserId,
+            task: task.id
+        })
 
         var taskAssignee = await TaskAssignees.findOne({
             where: { id: newTaskAssignment.id },
@@ -396,12 +405,24 @@ router.delete('/unassign/:assignmentId', verifyJWT, async (req, res) => {
     try{
         const assignmentId = req.params.assignmentId;
 
-        const taskAssignment = await TaskAssignees.destroy({
-            where: {
-                id: assignmentId
-            }
+        const taskAssignment = await TaskAssignees.findOne({
+            where: { id: assignmentId },
+            attributes: [ 'id', 'task' ]
         })
         if (!taskAssignment) return res.status(404).json({ success: false, message: [ 'ASSIGNMENT_NOT_FOUND' ] });
+
+        await TaskAssignees.destroy({
+            where: { id: taskAssignment.id }
+        })
+        
+        await TaskHistory.create({
+            field: "removed_assignee",
+            changedFrom: "",
+            changedTo: taskAssignment.name,
+            changedOn: new Date(),
+            changedBy: req.authenticatedUserId,
+            task: taskAssignment.task
+        })
         
         res.json({ success: true, data: null })
     } catch(error){
