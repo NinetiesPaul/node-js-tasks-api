@@ -73,3 +73,14 @@ router.post('/login', async (req, res) => {
         res.status(400).json({ success: false, msg: error.message })
     }
 })
+
+router.get('/api/users/list', async (req, res) => {
+    try{
+        var users = await Users.findAll({
+            attributes: ['id', 'name', 'email' ],
+        });
+        res.json({ success: true, data: { total: users.length, users: users } })
+    } catch(error) {
+        res.status(400).json({ success: false, msg: error.message })
+    }
+})
