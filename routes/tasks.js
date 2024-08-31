@@ -2,6 +2,7 @@ const Tasks = require('../models/tasks');
 const User = require('../models/user');
 const Users = require('../models/user');
 const TaskHistory = require('../models/taskhistory');
+const TaskAssignees = require('../models/taskassignee');
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -181,7 +182,20 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
                     model: User,
                     as: 'changed_by',
                     attributes: [ 'id', 'name', 'email' ]
-                },
+                }
+            },{
+                model: TaskAssignees,
+                as: 'assignees',
+                attributes: [ 'id' ],
+                include: [{
+                    model: User,
+                    as: 'assigned_to',
+                    attributes: [ 'id', 'name', 'email' ]
+                },{
+                    model: User,
+                    as: 'assigned_by',
+                    attributes: [ 'id', 'name', 'email' ]
+                }]
             }]
         });
 
@@ -323,6 +337,100 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
         });
         res.send({ success: true, data: updatedTask })
     } catch (error) {
+        res.status(400).json({ success: false, msg: error.message })
+    }
+})
+
+router.post('/assign/:taskId', verifyJWT, async (req, res) => {
+    try{
+        const taskId = req.params.taskId;
+
+        var task = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+        if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
+
+        var user = await Users.findOne({
+            where: {
+                id: req.body.assigned_to
+            }
+        });
+        if (!user) return res.status(404).json({ success: false, message: [ 'USER_NOT_FOUND' ] });
+
+        var newTaskAssignment = await TaskAssignees.create({
+            assignedTo: user.id,
+            assignedBy: req.authenticatedUserId,
+            task: task.id
+        })
+        
+        await TaskHistory.create({
+            field: "added_assignee",
+            changedFrom: "",
+            changedTo: user.name,
+            changedOn: new Date(),
+            changedBy: req.authenticatedUserId,
+            task: task.id
+        })
+
+        var taskAssignee = await TaskAssignees.findOne({
+            where: { id: newTaskAssignment.id },
+            attributes: ['id'],
+            include: [{
+                model: User,
+                as: 'assigned_to',
+                attributes: ['id', 'name', 'email']
+            },{
+                model: User,
+                as: 'assigned_by',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
+
+        res.send({ success: true, data: taskAssignee })
+    } catch(error){
+        let errorCode = 400;
+        let message = "GENERIC_ERROR";
+        if (error.name === "SequelizeUniqueConstraintError" ) {
+            errorCode = 202;
+            message = "USER_ALREADY_ASSIGNED";
+        }
+
+        res.status(errorCode).json({ success: false, message: [ message ] })
+    }
+})
+
+router.delete('/unassign/:assignmentId', verifyJWT, async (req, res) => {
+    try{
+        const assignmentId = req.params.assignmentId;
+
+        const taskAssignment = await TaskAssignees.findOne({
+            where: { id: assignmentId },
+            attributes: [ 'id', 'task' ],
+            include: [{
+                model: User,
+                as: 'assigned_to',
+                attributes: ['id', 'name', 'email']
+            }],
+        })
+        if (!taskAssignment) return res.status(404).json({ success: false, message: [ 'ASSIGNMENT_NOT_FOUND' ] });
+
+        await TaskAssignees.destroy({
+            where: { id: taskAssignment.id }
+        })
+        
+        await TaskHistory.create({
+            field: "removed_assignee",
+            changedFrom: "",
+            changedTo: taskAssignment.assigned_to.name,
+            changedOn: new Date(),
+            changedBy: req.authenticatedUserId,
+            task: taskAssignment.task
+        })
+        
+        res.json({ success: true, data: null })
+    } catch(error){
         res.status(400).json({ success: false, msg: error.message })
     }
 })
