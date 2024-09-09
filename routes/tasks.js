@@ -4,6 +4,7 @@ const Users = require('../models/user');
 const TaskHistory = require('../models/taskhistory');
 const TaskAssignees = require('../models/taskassignee');
 
+const { Op } = require('sequelize');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
@@ -138,18 +139,50 @@ router.get('/list', verifyJWT, async (req, res) => {
 
         if (paramErrors.length > 0) return res.status(400).json({ success: false, message: paramErrors });
 
+        if (req.query.assigned) {
+            if (req.query.assigned == "true") {
+                filters['$assignees.id$'] = {
+                    [Op.ne]: null
+                }
+            } else {
+                filters['$assignees.id$'] = {
+                    [Op.eq]: null
+                }
+            }
+        }
+
         var tasks = await Tasks.findAll({
             where: filters,
             attributes: ['id', 'title', 'description', 'status', 'type', ['createdOn', 'created_on'], ['closedOn', 'closed_on']],
-            include: [{
-                model: User,
-                as: 'created_by',
-                attributes: ['id', 'name', 'email']
-            },{
-                model: User,
-                as: 'closed_by',
-                attributes: ['id', 'name', 'email']
-            }],
+            include: [
+                {
+                    model: User,
+                    as: 'created_by',
+                    attributes: ['id', 'name', 'email'],
+                },
+                {
+                    model: User,
+                    as: 'closed_by',
+                    attributes: ['id', 'name', 'email'],
+                },
+                {
+                    model: TaskAssignees,
+                    as: 'assignees',
+                    attributes: [ 'id' ],
+                    include: [
+                        {
+                            model: User,
+                            as: 'assigned_to',
+                            attributes: [ 'id', 'name', 'email' ]
+                        },
+                        {
+                            model: User,
+                            as: 'assigned_by',
+                            attributes: [ 'id', 'name', 'email' ],
+                        }
+                    ],
+                }
+            ],
             order: [['createdOn', 'DESC']]
         });
         
