@@ -22,16 +22,48 @@ To run this application you must have installed on your environment:
 * `MySQL` - For storaging and accessing data
 
 ## Installation and Configuration
-Once you set up all the necessary software, run
+Having NPM and Node installed and configured on your device, git clone this rep then cd into the project's folder.
+First you need to create a copy of the config.json file. Run the following:
 ```
 cp config/config.json.local config/config.json
 ```
-and fill out the bracketed values on that new copy's ```DATABASE_URL``` with your connection information. Don't forget to set up a crypt hash for the ```TOKEN_SECRET```
-
-Having npm and node installed and configured in your machine, git clone this rep then cd into the project's folder and run
+And on this file, fill out the database connection information, such as:
+```
+{
+  "development": {
+    "username": "root",
+    "password": "root",
+    "database": "tasks_application",
+    "host": "localhost",
+    "dialect": "mysql"
+  }
+}
+```
+Now create a local copy of the .env file with
+```
+cp .env.example .env
+```
+Like the config.json, fill out the database connection information:
+```
+DB_DATABASE=tasks_application
+DB_USERNAME=root
+DB_PASSWORD=root
+DB_HOST=localhost
+DB_PORT=3306
+```
+After that run the npm's installation command: 
 ```
 npm install
 ```
+Before you run the app, you must migrate the app's database structure. Create the database with:
+```
+npx sequelize-cli db:create
+```
+And them create the tables with:
+```
+npx sequelize-cli db:migrate
+```
+Now start the service with:
 ```
 npm start
 ````
