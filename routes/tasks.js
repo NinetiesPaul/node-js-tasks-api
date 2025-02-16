@@ -9,6 +9,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router()
 const { check, validationResult } = require('express-validator');
+const TaskComment = require('../models/taskcomment');
 
 module.exports = router;
 
@@ -227,6 +228,15 @@ router.get('/view/:taskId', verifyJWT, async (req, res) => {
                 },{
                     model: User,
                     as: 'assigned_by',
+                    attributes: [ 'id', 'name', 'email' ]
+                }]
+            },{
+                model: TaskComment,
+                as: 'comments',
+                attributes: [ 'id', ['text', 'comment_text'], [ 'createdOn', 'created_on'] ],
+                include: [{
+                    model: User,
+                    as: 'created_by',
                     attributes: [ 'id', 'name', 'email' ]
                 }]
             }]
@@ -481,6 +491,59 @@ router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
 
         res.send({ success: true, data: "Task id '" + taskId + "' was deleted"})
     } catch (error) {
+        res.status(400).json({ success: false, msg: error.message })
+    }
+})
+
+router.post('/comment/:taskId', verifyJWT, async (req, res) => {
+    try{
+        const taskId = req.params.taskId;
+
+        var task = await Tasks.findOne({
+            where: {
+                id: taskId
+            }
+        });
+        if (!task) return res.status(404).json({ success: false, message: [ 'TASK_NOT_FOUND' ] });
+
+        var newTaskComment = await TaskComment.create({
+            createdOn: new Date(),
+            createdBy: req.authenticatedUserId,
+            task: task.id,
+            text: req.body.text
+        })
+
+        var taskComment = await TaskComment.findOne({
+            where: { id: newTaskComment.id },
+            attributes: ['id', [ 'text', 'comment_text' ], ['createdOn', 'created_on']],
+            include: [{
+                model: User,
+                as: 'created_by',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
+
+        res.send({ success: true, data: taskComment })
+    } catch(error){
+        res.status(400).json({ success: false, message: [ error.message ] })
+    }
+})
+
+router.delete('/comment/:commentId', verifyJWT, async (req, res) => {
+    try{
+        const commentId = req.params.commentId;
+
+        const taskComment = await TaskComment.findOne({
+            where: { id: commentId }
+        })
+        if (!taskComment) return res.status(404).json({ success: false, message: [ 'COMMENT_NOT_FOUND' ] });
+
+        await TaskComment.destroy({
+            where: { id: taskComment.id }
+        })
+        
+        res.json({ success: true, data: null })
+    } catch(error){
         res.status(400).json({ success: false, msg: error.message })
     }
 })

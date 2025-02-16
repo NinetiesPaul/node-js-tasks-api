@@ -5,6 +5,7 @@ const sequelize = require('../db/connection.js');
 const User = require('./user.js');
 const TaskHistory = require('./taskhistory.js');
 const TaskAssignee = require('./taskassignee.js');
+const TaskComment = require('./taskcomment.js');
 
 class Tasks extends Model {}
 
@@ -50,6 +51,11 @@ Tasks.hasMany(TaskHistory, {
 Tasks.hasMany(TaskAssignee, {
   foreignKey: 'task',
   as: 'assignees'
+})
+
+Tasks.hasMany(TaskComment, {
+  foreignKey: 'task',
+  as: 'comments'
 })
 
 module.exports = Tasks
