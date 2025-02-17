@@ -22,7 +22,7 @@ function verifyJWT(req, res, next){
     
     token = token.split(" ")[1];
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
-        if (err) return res.status(500).json({ success: false, message: [ "INVALID_TOKEN" ] });
+        if (err) return res.status(401).json({ success: false, message: [ "INVALID_TOKEN" ] });
 
         req.authenticatedUserId = decoded.user.id;
         next();
