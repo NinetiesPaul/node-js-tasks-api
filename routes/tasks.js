@@ -72,6 +72,15 @@ function updateValidation()
     ];
 }
 
+function commentValidation()
+{
+    return [
+        check('text').exists().withMessage('MISSING_TEXT'),
+        check('text').if(check('text').exists()).isString().withMessage('TEXT_NOT_STRING'),
+        check('text').if(check('text').exists()).notEmpty().withMessage('EMPTY_TEXT'),
+    ];
+}
+
 router.post('/create', verifyJWT, createValidation(), async (req, res) => {
     var validator = validationResult(req);
 
@@ -495,7 +504,15 @@ router.delete('/delete/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.post('/comment/:taskId', verifyJWT, async (req, res) => {
+router.post('/comment/:taskId', verifyJWT, commentValidation(), async (req, res) => {
+    var validator = validationResult(req);
+
+    var errorMessages = [];
+    validator.errors.forEach( errorLoop => {
+        errorMessages.push(errorLoop.msg)
+    });
+
+    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
     try{
         const taskId = req.params.taskId;
 
