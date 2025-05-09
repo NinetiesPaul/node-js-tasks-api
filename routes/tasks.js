@@ -72,6 +72,15 @@ function updateValidation()
     ];
 }
 
+function assignmentValidation()
+{
+    return [
+        check('assigned_to').exists().withMessage('MISSING_ASSIGNED_TO'),
+        check('assigned_to').if(check('assigned_to').exists()).trim().isInt().withMessage('ASSIGNED_TO_NOT_INTEGER'),
+        check('assigned_to').if(check('assigned_to').exists()).isLength(1).withMessage('EMPTY_ASSIGNED_TO'),
+    ];
+}
+
 function commentValidation()
 {
     return [
@@ -393,7 +402,15 @@ router.put('/close/:taskId', verifyJWT, async (req, res) => {
     }
 })
 
-router.post('/assign/:taskId', verifyJWT, async (req, res) => {
+router.post('/assign/:taskId', verifyJWT, assignmentValidation(), async (req, res) => {
+    var validator = validationResult(req);
+
+    var errorMessages = [];
+    validator.errors.forEach( errorLoop => {
+        errorMessages.push(errorLoop.msg)
+    });
+
+    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
     try{
         const taskId = req.params.taskId;
 
