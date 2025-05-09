@@ -77,7 +77,6 @@ function assignmentValidation()
     return [
         check('assigned_to').exists().withMessage('MISSING_ASSIGNED_TO'),
         check('assigned_to').if(check('assigned_to').exists()).trim().isInt().withMessage('ASSIGNED_TO_NOT_INTEGER'),
-        check('assigned_to').if(check('assigned_to').exists()).isLength(1).withMessage('EMPTY_ASSIGNED_TO'),
     ];
 }
 
