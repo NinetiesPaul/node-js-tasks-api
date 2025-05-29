@@ -60,7 +60,7 @@ function updateValidation()
             .notEmpty().withMessage('EMPTY_STATUS')
             .if(check('status').not().equals('closed')).isIn(['open', 'in_dev', 'blocked', 'in_qa']).withMessage('INVALID_STATUS'),
 
-        check('taskId').if(check('status').isIn(['open', 'in_dev', 'blocked', 'in_qa'])).custom(async value => {
+        check('taskId').custom(async value => {
             var task = await Tasks.findOne({
                 where: {
                     id: value,
