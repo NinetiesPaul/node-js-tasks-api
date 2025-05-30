@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../app.js');
+const app = require('../../app.js');
 
 describe('Missing Fields', () => {
   it('should try to register with missing fields', async () => {
