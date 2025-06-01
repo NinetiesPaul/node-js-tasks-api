@@ -4,6 +4,6 @@
     "password": "{PASSWORD}",
     "database": "{DATABASE}",
     "host": "{HOST}",
-    "dialect": "mysql"
+    "dialect": "{ENGINE}"
   }
 }
