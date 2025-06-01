@@ -53,9 +53,22 @@ describe('Invalid Email', () => {
 
 describe('Email taken', () => {
   it('should try to register with email already taken', async () => {
-    const res = await request(app).post('/register').send({
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let randomName = '';
+    for (let i = 0; i < 10; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      randomName += characters.charAt(randomIndex);
+    }
+
+    await request(app).post('/register').send({
       "name": "John Doe",
-      "email": "s.dante@lcn.com",
+      "email": randomName + "@fake.com",
+      "password": "password"
+    });
+
+    const res = await request(app).post('/register').send({
+      "name": "John Doe Second",
+      "email": randomName + "@fake.com",
       "password": "password"
     });
     expect(res.statusCode).toEqual(400);

@@ -4,13 +4,32 @@ const app = require('../../app.js');
 let token = "";
 let taskId = 0;
 let closedTaskId = 0;
+let firstUser = null;
+
+function generateName() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomName = "";
+  for (let i = 0; i < 10; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    randomName += characters.charAt(randomIndex);
+  }
+
+  return randomName;
+}
 
 describe('Test set up', () => {
-  let firstUser = null;
-
   it('should get a list of user', async () => {
     const res = await request(app).get('/api/users/list');
     firstUser = res.body.data.users[0];
+
+    if (firstUser === undefined) {
+      let randomUser = generateName();
+      const res = await request(app).post('/register').send({
+        name: randomUser + "_fake", email: randomUser + "@fakeuser.com", password: "123456"
+      });
+
+      firstUser = res.body.data;
+    }
   });
 
   it('should authenticate a user', async () => {
@@ -34,7 +53,7 @@ describe('Test set up', () => {
 
   it('should assign the task to someone', async () => {
     const res = await request(app).post('/api/task/assign/' + taskId).send({
-      assigned_to: "1",
+      assigned_to: firstUser['id'],
     }).set('Authorization', `Bearer ${token}`);
   });
 
@@ -54,7 +73,7 @@ describe('Test set up', () => {
 describe('Reassign same user fails', () => {
   it('should try to assign a task to someone who already is assigned to it', async () => {
     const res = await request(app).post('/api/task/assign/' + taskId).send({
-      assigned_to: 1
+      assigned_to: firstUser['id']
     }).set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toEqual(202);
     expect(res.body.message.includes("USER_ALREADY_ASSIGNED")).toBe(true);
@@ -73,7 +92,6 @@ describe('Update to close with /update fails', () => {
 
 describe('Update closed task fails', () => {
   it('should try to update a task that is closed', async () => {
-    console.log('/api/task/update/' + closedTaskId);
     const res = await request(app).put('/api/task/update/' + closedTaskId).send({
       type: "hotfix"
     }).set('Authorization', `Bearer ${token}`);
@@ -84,7 +102,6 @@ describe('Update closed task fails', () => {
 
 describe('Close task already closed fails', () => {
   it('should try to close a task already closed', async () => {
-    console.log('/api/task/close/' + closedTaskId);
     const res = await request(app).put('/api/task/close/' + closedTaskId).send({}).set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toEqual(400);
     expect(res.body.message.includes("TASK_ALREADY_CLOSED")).toBe(true);

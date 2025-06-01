@@ -9,12 +9,43 @@ let commentId = 0;
 let firstUser = null;
 let secondUser = null;
 
+function generateName() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomName = "";
+  for (let i = 0; i < 10; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    randomName += characters.charAt(randomIndex);
+  }
+
+  return randomName;
+}
+
 describe('Happy path set up', () => {
   it('should get a list of user', async () => {
     const res = await request(app).get('/api/users/list');
 
     firstUser = res.body.data.users[0];
     secondUser = res.body.data.users[1];
+
+    if (firstUser === undefined) {
+      let randomUser = generateName();
+      const res = await request(app).post('/register').send({
+        name: randomUser + "_fake", email: randomUser + "@fakeuser.com", password: "123456"
+      });
+
+      firstUser = res.body.data;
+    }
+    
+    if (secondUser === undefined) {
+      let randomUser = generateName();
+
+      const res = await request(app).post('/register').send({
+        name: randomUser + "_fake", email: randomUser + "@fakeuser.com", password: "123456"
+      });
+
+      secondUser = res.body.data;
+    }
+
   });
 
   it('should authenticate a user', async () => {
