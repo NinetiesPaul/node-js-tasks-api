@@ -1,25 +1,23 @@
 ## Tasks API in NodeJS
-A simple API in NodeJS. It has some basic functions, like:
+This is a RESTful API application for managing tasks and issues. The technology used here is NodeJs, and the main purpose of this project is to showcase my understanding of key features under this technology, such as:
 
+- Requests performing CRUD operations
 - User registration and authentication using JWT
-- Perform CRUD operations of Tasks
 - Some basics business rules enforced
-
-My main goal is to showcase some concepts, such as:
-
 - Migrations and model relationship
 - Authentication configuration
 - Routes definitions
 - SOLID and KISS principles on a MVC architecture
+- Unit/Integration testing
 
-The main tech behind it is NodeJs and also some others Js libraries. For storaging, i'm using MySQL relational database
+The main tech behind it is NodeJs with the Express framework, to showcase it's cleanliness and simplicity while maintaning a robust architecture. For storaging i'm using relational databases managed with Sequelize
 
 ## Environment setup
 To run this application you must have installed on your environment:
 
-* `NodeJS` - For the main application 
-* `NPM` - For library and packages management
-* `MySQL` - For storaging and accessing data
+* `NodeJS` (20.11.0) - For the main application 
+* `NPM` (10.4.0) - For library and packages management
+* `MySQL` (5.7 or greater) or `PostgreSQL` (15 or greater) - For storaging and accessing data
 
 ## Installation and Configuration
 Having NPM and Node installed and configured on your device, git clone this rep then cd into the project's folder.
@@ -68,6 +66,13 @@ Now start the service with:
 npm start
 ````
 If you see ```Server Started at 3000``` as the last message then the app is good to go!
+
+## Tests
+To run the integrations tests and verify the application correct operations, run the following command:
+```
+npm jest
+```
+It will be created a new folder under `coverage` at the project's root. Open the `index.html` to check the tests coverage results.
 
 ## Usage
 
