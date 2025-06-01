@@ -71,7 +71,7 @@ describe('Invalid fields', () => {
 });
 
 describe('Empty fields', () => {
-  it('should try to create a comment with invalid fields', async () => {
+  it('should try to create a comment with empty fields', async () => {
     const res = await request(app).post('/api/task/comment/' + taskId).send({
       text: ""
     }).set('Authorization', `Bearer ${token}`);
