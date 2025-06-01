@@ -26,11 +26,8 @@ exports.createTask = async (req, res) => {
         errorMessages.push(errorLoop.msg)
     });
 
-    if (errorMessages.length > 0) return res.status(400).json({ success: false, message: errorMessages });
-
     try{
-
-        //if (errorMessages.length > 0) throw new Error(JSON.stringify({ success: false, message: errorMessages }));
+        if (errorMessages.length > 0) throw new Error(JSON.stringify({ success: false, message: errorMessages }));
 
         var taskCreated = await Tasks.create({
             title: req.body.title,
@@ -366,7 +363,7 @@ exports.assignTask = async (req, res) => {
         errorMessages.push(errorLoop.msg)
     });
 
-    try{
+    try {
         if (errorMessages.length > 0) throw new Error(JSON.stringify({ success: false, message: errorMessages }));
 
         const taskId = req.params.taskId;
@@ -485,7 +482,7 @@ exports.createComment = async (req, res) => {
         errorMessages.push(errorLoop.msg)
     });
 
-    try{
+    try {
         if (errorMessages.length > 0) throw new Error(JSON.stringify({ success: false, message: errorMessages }));
 
         const taskId = req.params.taskId;
