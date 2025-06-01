@@ -96,21 +96,29 @@ describe('POST /api/task/create', () => {
 describe('PUT /api/task/update', () => {
   let type = "";
   let status = "";
+  let title = "";
+  let description = "";
 
   it('should update a task', async () => {
     const res = await request(app).put('/api/task/update/' + taskId).send({
       type: "hotfix",
-      status: "in_qa"
+      status: "in_qa",
+      title: "New title",
+      description: "New description"
     }).set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toEqual(200);
 
     status = res.body.data.status;
     type = res.body.data.type;
+    title = res.body.data.title;
+    description = res.body.data.description;
   });
 
   it('the task should be different', async () => {
     expect(status).toBe("in_qa");
     expect(type).toBe("hotfix");
+    expect(title).toBe("New title");
+    expect(description).toBe("New description");
   });
 });
 
@@ -129,6 +137,16 @@ describe('GET /api/task/view', () => {
       if (entry['field'] == "status") {
         expect(entry['changed_from']).toBe("open");
         expect(entry['changed_to']).toBe("in_qa");
+      }
+
+      if (entry['field'] == "title") {
+        expect(entry['changed_from']).toBe("Task title");
+        expect(entry['changed_to']).toBe("New title");
+      }
+
+      if (entry['field'] == "description") {
+        expect(entry['changed_from']).toBe("This is the task description");
+        expect(entry['changed_to']).toBe("New description");
       }
     })
   });
