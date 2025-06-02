@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../../app.js');
 
+let randomName = "";
+
 describe('Missing Fields', () => {
   it('should try to register with missing fields', async () => {
     const res = await request(app).post('/register').send({
@@ -54,7 +56,6 @@ describe('Invalid Email', () => {
 describe('Email taken', () => {
   it('should try to register with email already taken', async () => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let randomName = '';
     for (let i = 0; i < 10; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
       randomName += characters.charAt(randomIndex);
@@ -73,5 +74,55 @@ describe('Email taken', () => {
     });
     expect(res.statusCode).toEqual(400);
     expect(res.body.message.includes("EMAIL_ALREADY_TAKEN")).toBe(true);
+  });
+});
+
+describe('Secured endpoint must request a token', () => {
+  it('should require a token', async () => {
+    const res = await request(app).post('/api/task/create').send({
+      title: "Task title",
+      description: "Task description",
+      type: "hotfix"
+    });
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body.message.includes("MISSING_TOKEN")).toBe(true);
+  });
+});
+
+describe('Secured endpoint must request a valid token', () => {
+  it('should refuse a token', async () => {
+    const res = await request(app).post('/api/task/create').send({
+      title: "Task title",
+      description: "Task description",
+      type: "hotfix"
+    }).set('Authorization', `Bearer someToken`);
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body.message.includes("INVALID_TOKEN")).toBe(true);
+  });
+});
+
+describe('Must try to log with an existing user', () => {
+  it('should refuse if unknown user', async () => {
+    const res = await request(app).post('/login').send({
+      username: "someone@mail.com",
+      description: "123456",
+    });
+
+    expect(res.statusCode).toEqual(404);
+    expect(res.body.message.includes("USER_NOT_FOUND")).toBe(true);
+  });
+});
+
+describe('Must try to log with the right password', () => {
+  it('should refuse wrong password', async () => {
+    const res = await request(app).post('/login').send({
+      username: randomName + "@fake.com",
+      password: "1234567",
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message.includes("INVALID_CREDENTIALS")).toBe(true);
   });
 });

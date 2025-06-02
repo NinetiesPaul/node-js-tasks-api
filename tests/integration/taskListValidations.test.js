@@ -136,32 +136,10 @@ describe('Validate bad query params', () => {
   });
 });
 
-/*
-describe('Invalid fields', () => {
-  it('should try to create task with invalid fields', async () => {
-    const res = await request(app).post('/api/task/create').send({
-      title: 99,
-      description: 99,
-      type: 99
-    }).set('Authorization', `Bearer ${token}`);
-    expect(res.statusCode).toEqual(400);
-    expect(res.body.message.includes("TITLE_NOT_STRING")).toBe(true);
-    expect(res.body.message.includes("DESCRIPTION_NOT_STRING")).toBe(true);
-    expect(res.body.message.includes("TYPE_NOT_STRING")).toBe(true);
-  });
-});
+describe('Task not found', () => {
+  it('should try to view a task with an invalid id and fails', async () => {
+    const res = await request(app).get('/api/task/view/999999').set('Authorization', `Bearer ${token}`);
 
-describe('Empty fields', () => {
-  it('should try to create task with empty fields', async () => {
-    const res = await request(app).post('/api/task/create').send({
-      title: "",
-      description: "",
-      type: ""
-    }).set('Authorization', `Bearer ${token}`);
-    expect(res.statusCode).toEqual(400);
-    expect(res.body.message.includes("EMPTY_TITLE")).toBe(true);
-    expect(res.body.message.includes("EMPTY_DESCRIPTION")).toBe(true);
-    expect(res.body.message.includes("EMPTY_TYPE")).toBe(true);
+    expect(res.body.message.includes("TASK_NOT_FOUND")).toBe(true);
   });
 });
-*/

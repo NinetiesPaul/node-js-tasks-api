@@ -3,7 +3,7 @@ const app = require('../../app.js');
 
 let randomName = "";
 
-describe('POST /register', () => {
+describe('User registration', () => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < 10; i++) {
     const randomIndex = Math.floor(Math.random() * characters.length);
@@ -20,7 +20,7 @@ describe('POST /register', () => {
   });
 });
 
-describe('GET /api/users/list', () => {
+describe('Listing all users', () => {
   let users = [];
 
   it('should return a list of users', async () => {
@@ -39,7 +39,7 @@ describe('GET /api/users/list', () => {
   });
 });
 
-describe('POST /login', () => {
+describe('Authenticate user', () => {
   it('should authenticate a user', async () => {
     const res = await request(app).post('/login').send({
       username: randomName + "@fakeuser.com",
