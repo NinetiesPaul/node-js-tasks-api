@@ -32,6 +32,14 @@ exports.login = async (req, res) => {
     }
 }
 
+exports.auth = async (req, res) => {
+    try{
+        res.json({ success: true });
+    } catch(error) {
+        res.status(400).json({ success: false, msg: error.message })
+    }
+}
+
 exports.register = async (req, res) => {
     var validator = validationResult(req);
 

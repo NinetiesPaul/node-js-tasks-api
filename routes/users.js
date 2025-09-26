@@ -2,6 +2,7 @@ const userController = require('../controllers/userController');
 
 const express = require('express');
 const router = express.Router()
+const jwt = require('jsonwebtoken');
 const { check } = require('express-validator');
 
 module.exports = router;
@@ -21,8 +22,23 @@ function userValidation()
     ];
 }
 
+function verifyJWT(req, res, next){
+    var token = req.headers['authorization'];
+    if (!token) return res.status(401).json({ success: false, message: [ "MISSING_TOKEN" ] });
+    
+    token = token.split(" ")[1];
+    jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded) {
+        if (err) return res.status(401).json({ success: false, message: [ "INVALID_TOKEN" ] });
+
+        req.authenticatedUserId = decoded.user.id;
+        next();
+    });
+}
+
 router.post('/register', userValidation(), userController.register)
 
 router.post('/login', userController.login)
 
 router.get('/api/users/list', userController.listUsers)
+
+router.post('/auth', verifyJWT, userController.auth)
