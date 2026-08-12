@@ -19,6 +19,10 @@ To run this application you must have installed on your environment:
 * `NPM` (10.4.0) - For library and packages management
 * `MySQL` (5.7 or greater) or `PostgreSQL` (15 or greater) - For storaging and accessing data
 
+or
+
+* `Docker` (Any version) - To run a complete dedicated containerized version of the application
+
 ## Installation and Configuration
 Having NPM and Node installed and configured on your device, git clone this rep then cd into the project's folder.
 First you need to create a copy of the config.json file. Run the following:
@@ -67,12 +71,34 @@ npm start
 ````
 If you see ```Server Started at 3000``` as the last message then the app is good to go!
 
+### Docker version
+
+If you have Docker on your enviroment simply run the command
+```
+docker-compose -f docker/docker-compose.yml build --no-cache
+```
+To build and install the complete enviroment to run the app. Then run
+```
+docker compose -f docker/docker-compose.yml up -d
+```
+To initiate an instance of the application. If you run
+```
+docker ps
+```
+and see both containers up and healthy, it means the application is working.
+
 ## Tests
 To run the integrations tests and verify the application correct operations, run the following command:
 ```
 npm jest
 ```
 It will be created a new folder under `coverage` at the project's root. Open the `index.html` to check the tests coverage results.
+
+### Testing on Docker
+If you have the Docker enviroment up and running simply run the command:
+```
+docker exec -it docker-api-1 npm test
+```
 
 ## Usage
 
